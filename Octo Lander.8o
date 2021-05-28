@@ -1,0 +1,289 @@
+﻿# position
+:alias px v2
+:alias py v3
+
+# screen position
+:alias sx v4
+:alias sy v5
+
+# momentum
+:alias mx v6
+:alias my v7
+
+# for doing dumb crap with vF usually
+:alias swp v8
+:alias stpd v9
+
+# animations
+:alias utrst vA
+:alias htrst vB
+
+: main
+	clear
+  px := 0
+  py := 0
+	sx := 5
+	sy := 26
+	mx := 115
+	my := 115
+	stpd := 115
+	
+	# Geo setup
+	i := piller
+	sx := 22
+	sy := 16
+	sprite sx sy 15
+	sx := 30
+	sy := 16
+	sprite sx sy 15
+	sx := 38
+	sy := 16
+	sprite sx sy 15
+	
+	i := vborder
+	sx := 63
+	sy := 0
+	sprite sx sy 15
+	sx := 63
+	sy := 16
+	sprite sx sy 15
+	
+	i := hborder
+	sx := 0
+	sy := 31
+	sprite sx sy 15
+	sx := 8
+	sy := 31
+	sprite sx sy 15
+	sx := 16
+	sy := 31
+	sprite sx sy 15
+	sx := 24
+	sy := 31
+	sprite sx sy 15
+	sx := 32
+	sy := 31
+	sprite sx sy 15
+	sx := 36
+	sy := 31
+	sprite sx sy 15
+	sx := 44
+	sy := 31
+	sprite sx sy 15
+	sx := 52
+	sy := 31
+	sprite sx sy 15
+	sx := 60
+	sy := 31
+	sprite sx sy 15
+	
+	i := msgGoal1
+	sx := 47
+	sy := 20
+	sprite sx sy 5
+	
+	i := msgGoal2
+	sx := 56
+	sy := 20
+	sprite sx sy 5
+	
+	# player setup
+	sx := 5
+	sy := 26
+  i := ship_idle
+  sprite sx sy 3
+
+  loop
+		
+		# gather input
+    v0 := OCTO_KEY_W if v0 key begin
+			my += -5
+			i := ship_bottom_thrust_1
+			sprite sx sy 6
+			utrst := 1
+		end
+    v0 := OCTO_KEY_S if v0 key begin
+			my +=  5
+		end
+    v0 := OCTO_KEY_A if v0 key begin
+			mx += -5
+			i := ship_right_thrust
+			sprite sx sy 3
+			htrst := 1
+		end
+    v0 := OCTO_KEY_D if v0 key begin
+			mx +=  5
+			i := ship_left_thrust
+			sprite sx sy 3
+			htrst := -1
+		end
+		
+		v0 := OCTO_KEY_R if v0 key then jump main
+
+		# Add gravity
+		my += 1
+		if my > 215 then my := 200
+		if my < 15 then my := 15
+		if mx > 215 then mx := 200
+		if mx < 15 then mx := 15
+		
+		# Erase Player
+		if htrst == -1 begin
+			htrst := 0
+			i := ship_left_thrust
+			sprite sx sy 3
+		end
+		
+		if htrst == 1 begin
+			htrst := 0
+			i := ship_right_thrust
+			sprite sx sy 3
+		end
+		
+		if utrst == 1 begin
+			utrst := 0
+			i := ship_bottom_thrust_1
+			sprite sx sy 6
+		end
+		
+		i := ship_idle
+    sprite sx sy 3
+		
+		# Update position from momentum, only changing screen position when factional position overflows
+		swp := mx
+		if mx >= 115 begin
+			swp -= 115
+			px += swp
+			sx += vF
+		else
+			swp =- stpd
+			px -= swp
+			sx -= vF
+		end
+		
+		swp := my
+		if my >= 115 begin
+			swp -= 115
+			py += swp
+			sy += vF
+		else
+			swp =- stpd
+			py -= swp
+			sy -= vF
+		end
+		
+		# Win/Fail check
+		if sx > 16 begin
+			if sx < 44 begin
+				if sy > 13 then jump fail
+			end
+		end
+		
+		if sx > 44 begin
+			if sy > 24 then jump win
+		end
+		
+		# Clamp to frame
+		if sx < 1 then sx := 1
+		if sy < 1 then sy := 1
+		if sx > 60 then sx := 60
+		if sy > 26 begin
+			sy := 26
+			if my > 0 then my := 115
+		end
+		
+		
+		# Draw player
+		i := ship_idle
+    sprite sx sy 3
+
+    # lock the framerate of this program via the delay timer:
+    loop
+      vf := delay
+      if vf != 0 then
+    again
+    vf := 10
+    delay := vf
+  again
+
+: win
+	clear
+	i := msgVic1
+	sx := 10
+	sy := 10
+	sprite sx sy 5
+	sx := 18
+	i := msgVic2
+	sprite sx sy 5
+	sx := 26
+	i := msgVic3
+	sprite sx sy 5
+	sx := 34
+	i := msgVic4
+	sprite sx sy 5
+	loop
+		v0 := OCTO_KEY_R if v0 key then jump main
+	again
+
+: fail
+	clear
+	i := msgFail1
+	sx := 10
+	sy := 10
+	sprite sx sy 5
+	sx := 18
+	i := msgFail2
+	sprite sx sy 5
+	loop
+		v0 := OCTO_KEY_R if v0 key then jump main
+	again
+	
+	
+	
+: ship_idle
+0x18 0x3C 0x3C 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+
+: ship_bottom_thrust_1
+0x00 0x00 0x00 0x00 0x18 0x08 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+
+: ship_bottom_thrust_2
+0x00 0x00 0x00 0x00 0x18 0x10 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+
+: ship_left_thrust
+0x00 0x00 0x40 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+
+: ship_right_thrust
+0x00 0x00 0x02 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+
+: piller
+0xF2 0x5F 0xFF 0xB7 0x7D 0x7F 0xFB 0xFD 0xF5 0xFB 0x7F 0x6A 0xDD 0x9E 0xBD
+
+: vborder
+0xC0 0x40 0xC0 0x80 0x40 0x40 0xC0 0x80 0x80 0xC0 0x40 0x40 0xC0 0x80 0x80
+
+: hborder
+0x7D 0xE7 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+
+: msgGoal1
+0xF7 0x85 0xB5 0x95 0xF7 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+
+: msgGoal2
+0xE8 0xA8 0xE8 0xA8 0xAC 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+
+: msgVic1
+0xAE 0xA4 0xA4 0xA4 0x4E 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+
+: msgVic2
+0xEE 0x84 0x84 0x84 0xE4 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+
+: msgVic3
+0xEE 0xAA 0xAC 0xAA 0xEA 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+
+: msgVic4
+0xA0 0xE0 0x40 0x40 0x40 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+
+: msgFail1
+0xEE 0x8A 0xCE 0x8A 0x8A 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+
+: msgFail2
+0xE8 0x48 0x48 0x48 0xEE 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
